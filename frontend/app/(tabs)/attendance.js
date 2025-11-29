@@ -22,6 +22,7 @@ const STATUS_OPTIONS = [
 export default function AttendanceScreen() {
   const router = useRouter();
   const [batches, setBatches] = useState([]);
+  const [students, setStudents] = useState([]);
   const [selectedBatch, setSelectedBatch] = useState('');
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
   const [rows, setRows] = useState([]);
@@ -37,32 +38,57 @@ export default function AttendanceScreen() {
     setLoading(false);
   };
 
-  useEffect(() => {
-    loadBatches();
-  }, []);
+  const loadStudents = async () => {
+    const stored = await AsyncStorage.getItem('students');
+    const parsed = stored ? JSON.parse(stored) : [];
+    setStudents(parsed);
+  };
 
   useEffect(() => {
+    loadBatches();
+    loadStudents();
+  }, []);
+
+  // Whenever batch changes, populate rows with registered students of that batch
+  useEffect(() => {
     if (!selectedBatch) return;
-    const batch = batches.find((b) => b._id === selectedBatch);
-    if (batch?.students) {
-      setRows(batch.students.map((s) => ({ student: s, status: 'PRESENT', remarks: '' })));
-    } else {
-      setRows([]);
-    }
-  }, [selectedBatch, batches]);
+
+    const filteredStudents = students.filter((s) => s.batch === selectedBatch);
+
+    setRows(
+      filteredStudents.map((s) => ({
+        student: s,
+        status: 'PRESENT', // default status
+        remarks: '',
+      }))
+    );
+  }, [selectedBatch, students]);
 
   const updateRow = (studentId, status) => {
     setRows((current) =>
-      current.map((row) => (row.student._id === studentId ? { ...row, status } : row))
+      current.map((row) =>
+        row.student._id === studentId ? { ...row, status } : row
+      )
     );
   };
 
   const handleSave = async () => {
     setSaving(true);
-    const updatedBatches = batches.map((b) =>
-      b._id === selectedBatch ? { ...b, students: rows.map((r) => r.student) } : b
-    );
-    await AsyncStorage.setItem('batches', JSON.stringify(updatedBatches));
+
+    // You can optionally save attendance per student here
+    // For simplicity, we will just save it in AsyncStorage under batch attendance
+    const storedAttendance = await AsyncStorage.getItem('attendance');
+    const parsedAttendance = storedAttendance ? JSON.parse(storedAttendance) : {};
+
+    parsedAttendance[selectedBatch] = parsedAttendance[selectedBatch] || {};
+    parsedAttendance[selectedBatch][date] = rows.map((r) => ({
+      _id: r.student._id,
+      name: r.student.name,
+      rollNumber: r.student.rollNumber,
+      status: r.status,
+    }));
+
+    await AsyncStorage.setItem('attendance', JSON.stringify(parsedAttendance));
     setSaving(false);
     alert('Attendance saved!');
   };
@@ -96,7 +122,12 @@ export default function AttendanceScreen() {
           </Picker>
         </View>
 
-        <TextInput style={styles.input} value={date} onChangeText={setDate} placeholder="YYYY-MM-DD" />
+        <TextInput
+          style={styles.input}
+          value={date}
+          onChangeText={setDate}
+          placeholder="YYYY-MM-DD"
+        />
       </View>
 
       <View style={styles.summaryRow}>
@@ -116,7 +147,9 @@ export default function AttendanceScreen() {
           keyExtractor={(item) => item.student._id}
           refreshControl={<RefreshControl refreshing={loading} onRefresh={loadBatches} />}
           contentContainerStyle={{ paddingBottom: 100 }}
-          ListEmptyComponent={<Text style={styles.emptyState}>No students found for this batch.</Text>}
+          ListEmptyComponent={
+            <Text style={styles.emptyState}>No students found for this batch.</Text>
+          }
           renderItem={({ item }) => (
             <View style={styles.row}>
               <View>
@@ -129,11 +162,19 @@ export default function AttendanceScreen() {
                     key={option.key}
                     style={[
                       styles.statusButton,
-                      item.status === option.key && { backgroundColor: `${option.color}40`, borderColor: option.color },
+                      item.status === option.key && {
+                        backgroundColor: `${option.color}40`,
+                        borderColor: option.color,
+                      },
                     ]}
                     onPress={() => updateRow(item.student._id, option.key)}
                   >
-                    <Text style={[styles.statusLabel, item.status === option.key && { color: option.color }]}>
+                    <Text
+                      style={[
+                        styles.statusLabel,
+                        item.status === option.key && { color: option.color },
+                      ]}
+                    >
                       {option.label[0]}
                     </Text>
                   </TouchableOpacity>
@@ -152,104 +193,119 @@ export default function AttendanceScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { 
-    flex: 1, 
+  container: {
+    flex: 1,
     backgroundColor: '#f5f9f7ff',
-     padding: 16, 
-     gap: 12 
-    },
-  backButton: { 
-    paddingVertical: 8, 
+    padding: 16,
+  },
+  backButton: {
+    paddingVertical: 8,
     paddingHorizontal: 16,
-    backgroundColor: '#166534', 
-    borderRadius: 12, 
-    alignSelf: 'flex-start' 
+    backgroundColor: '#166534',
+    borderRadius: 12,
+    alignSelf: 'flex-start',
+    marginBottom: 12,
   },
-  backButtonText: { 
-    color: '#d1fae5', 
-    fontWeight: '600', 
-    fontSize: 16 
+  backButtonText: {
+    color: '#d1fae5',
+    fontWeight: '600',
+    fontSize: 16,
   },
-  filters: { 
-    flexDirection: 'row', 
-    gap: 12, 
-    marginTop: 4 
+  filters: {
+    flexDirection: 'row',
+    gap: 12,
+    marginBottom: 12,
   },
-  pickerWrapper: { 
-    flex: 1, 
-    backgroundColor: '#126835ff', 
-    borderRadius: 14 
+  pickerWrapper: {
+    flex: 1,
+    backgroundColor: '#126835ff',
+    borderRadius: 14,
   },
   picker: {
-     color: '#fafef9ff' 
-    },
+    color: '#fafef9ff',
+  },
   input: {
-     width: 150, 
-     backgroundColor: '#0f6330ff', 
-     borderRadius: 14, 
-     paddingHorizontal: 14, 
-     color: '#eef0eaff' 
-    },
-  summaryRow: { 
-    flexDirection: 'row', 
-    gap: 12 },
-  summaryCard: {
-     flex: 1, 
-     borderWidth: 1, 
-     borderRadius: 18, 
-     padding: 12, 
-     alignItems: 'center', 
-     backgroundColor: '#166534' 
-    },
-  summaryValue: { 
-    color: '#f1f3ecff', 
-    fontSize: 22, 
-    fontWeight: '700' },
-  summaryLabel: { 
-    fontSize: 12, 
-    fontWeight: '600' 
+    width: 150,
+    backgroundColor: '#0f6330ff',
+    borderRadius: 14,
+    paddingHorizontal: 14,
+    color: '#eef0eaff',
   },
-  row: { 
-    backgroundColor: '#14532d', 
-    borderRadius: 18, 
-    padding: 16, 
-    marginBottom: 12, 
+  summaryRow: {
     flexDirection: 'row',
-     alignItems: 'center', 
-     justifyContent: 'space-between', 
-     borderWidth: 1, 
-     borderColor: '#239d51ff' },
-  name: { 
-    color: '#d9f99d', 
-    fontSize: 16, 
-    fontWeight: '600' 
+    gap: 12,
+    marginBottom: 12,
   },
-  meta: { 
-    color: '#d9f9deff', 
-    marginTop: 2 },
-  statusGroup: { 
-    flexDirection: 'row', 
-    gap: 6 
+  summaryCard: {
+    flex: 1,
+    borderWidth: 1,
+    borderRadius: 18,
+    padding: 12,
+    alignItems: 'center',
+    backgroundColor: '#166534',
   },
-  statusButton: { 
-    borderRadius: 999, 
-    borderWidth: 1, 
-    borderColor: '#e3f6eaff', 
-    paddingVertical: 6, 
-    paddingHorizontal: 12 },
-  statusLabel: { 
-    color: '#ddf6e0ff', 
-    fontWeight: '600' },
-  emptyState: { 
-    color: '#c7d2ca', 
-    textAlign: 'center', 
-    marginTop: 60 },
-  saveButton: { 
-    backgroundColor: '#22c55e', 
-    borderRadius: 18, 
-    padding: 16, 
-    alignItems: 'center', 
-    position: 'absolute', 
-    bottom: 32, left: 16, right: 16 },
-  saveButtonText: { color: '#14532d', fontWeight: '700', fontSize: 16 },
+  summaryValue: {
+    color: '#f1f3ecff',
+    fontSize: 22,
+    fontWeight: '700',
+  },
+  summaryLabel: {
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  row: {
+    backgroundColor: '#14532d',
+    borderRadius: 18,
+    padding: 16,
+    marginBottom: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    borderWidth: 1,
+    borderColor: '#239d51ff',
+  },
+  name: {
+    color: '#d9f99d',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  meta: {
+    color: '#d9f9deff',
+    marginTop: 2,
+  },
+  statusGroup: {
+    flexDirection: 'row',
+    gap: 6,
+  },
+  statusButton: {
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: '#e3f6eaff',
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+  },
+  statusLabel: {
+    color: '#ddf6e0ff',
+    fontWeight: '600',
+  },
+  emptyState: {
+    color: '#c7d2ca',
+    textAlign: 'center',
+    marginTop: 60,
+  },
+  saveButton: {
+    backgroundColor: '#22c55e',
+    borderRadius: 18,
+    padding: 16,
+    alignItems: 'center',
+    position: 'absolute',
+    bottom: 32,
+    left: 16,
+    right: 16,
+  },
+  saveButtonText: {
+    color: '#14532d',
+    fontWeight: '700',
+    fontSize: 16,
+  },
 });
