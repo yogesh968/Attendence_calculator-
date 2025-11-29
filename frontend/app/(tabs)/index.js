@@ -4,6 +4,7 @@ import { Link } from 'expo-router';
 import { useEffect,useState } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Button } from '@react-navigation/elements';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 const quickLinks=[
   {title:'Mark Attendance',subtitle:'Swipe by batch & date',href:'/(tabs)/attendance'},
   {title:'Insights',subtitle:'Stats & defaulters',href:'/(tabs)/insights'},
@@ -11,17 +12,51 @@ const quickLinks=[
   {title:'Students',subtitle:'Roster & contacts',href:'/students'},
   {title:'Defaulters',subtitle:'Full monthly view',href:'/defaulters'},
 ]
-const highlights = [
-  { label: 'Overall Attendance', value: '92%' },
-  { label: 'Today Present', value: '134' },
-  { label: 'Batches Active', value: '08' },
-];
-const batches = [
-  { id: 1, name: 'Batch A' },
-  { id: 2, name: 'Batch B' },
-  { id: 3, name: 'Batch C' },
-];
 export default function DashboardScreen() {
+  const [highlights, setHighlights] = useState([
+    { label: 'Overall Attendance', value: '0%' },
+    { label: 'Today Present', value: '0' },
+    { label: 'Batches Active', value: '0' },
+  ]);
+  const [batches, setBatches] = useState([]);
+
+  const loadData = async () => {
+    const b = await AsyncStorage.getItem('batches');
+    const s = await AsyncStorage.getItem('students');
+    const a = await AsyncStorage.getItem('attendance');
+
+    const bb = b ? JSON.parse(b) : [];
+    const ss = s ? JSON.parse(s) : [];
+    const aa = a ? JSON.parse(a) : {};
+    setBatches(bb.map(batch => ({ id: batch._id, name: batch.name })));
+    const today = new Date().toISOString().split('T')[0];
+    let totalPresent = 0;
+    let totalEntries = 0;
+    let activeBatches = 0;
+
+    Object.keys(aa).forEach((batchId) => {
+      if (aa[batchId][today]) {
+        activeBatches++;
+        aa[batchId][today].forEach((entry) => {
+          totalEntries++;
+          if (entry.status === 'PRESENT') totalPresent++;
+        });
+      }
+    });
+
+    const overallAttendance = totalEntries > 0 ? Math.round((totalPresent / totalEntries) * 100) : 0;
+
+    setHighlights([
+      { label: 'Overall Attendance', value: `${overallAttendance}%` },
+      { label: 'Today Present', value: totalPresent.toString() },
+      { label: 'Batches Active', value: activeBatches.toString() },
+    ]);
+  };
+
+  useEffect(() => {
+    loadData();
+  }, []);
+
   return (
     <SafeAreaView style={styles.safe} >
       <ScrollView contentContainerStyle={styles.container}>
