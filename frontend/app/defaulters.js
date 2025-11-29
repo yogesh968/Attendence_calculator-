@@ -21,39 +21,21 @@ export default function DefaultersScreen() {
   const [loading, setLoading] = useState(false);
   const [entries, setEntries] = useState([]);
 
-  const dummyBatches = [
-    { _id: 'b1', name: 'Batch A' },
-    { _id: 'b2', name: 'Batch B' },
-  ];
 
-  const dummyEntries = [
-    {
-      student: { _id: 's1', name: 'Rohit Sharma', rollNumber: 21 },
-      percentage: 68,
-    },
-    {
-      student: { _id: 's2', name: 'Neha Verma', rollNumber: 14 },
-      percentage: 72,
-    },
-    {
-      student: { _id: 's3', name: 'Karan Singh', rollNumber: 5 },
-      percentage: 60,
-    },
-  ];
 
-  useEffect(() => {
-    setBatches(dummyBatches);
-    setSelectedBatch('b1');
-  }, []);
+  // useEffect(() => {
+  //   setBatches(dummyBatches);
+  //   setSelectedBatch('b1');
+  // }, []);
 
-  useEffect(() => {
-    setLoading(true);
-    const filtered = dummyEntries.filter(
-      (e) => e.percentage < Number(threshold)
-    );
-    setEntries(filtered);
-    setLoading(false);
-  }, [selectedBatch, month, year, threshold]);
+  // useEffect(() => {
+  //   setLoading(true);
+  //   const filtered = dummyEntries.filter(
+  //     (e) => e.percentage < Number(threshold)
+  //   );
+  //   setEntries(filtered);
+  //   setLoading(false);
+  // }, [selectedBatch, month, year, threshold]);
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 40 }}>
