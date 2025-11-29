@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import {ActivityIndicator,
+import {
+  ActivityIndicator,
   ScrollView,
   StyleSheet,
   Text,
@@ -7,8 +8,11 @@ import {ActivityIndicator,
   TouchableOpacity,
   View,
 } from 'react-native';
-// import { BatchService } from '../src/services/api';
+import { useRouter } from 'expo-router';
+
 export default function BatchesScreen() {
+  const router = useRouter();
+
   const [batches, setBatches] = useState([]);
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -39,16 +43,6 @@ export default function BatchesScreen() {
     }, 700);
   };
 
-  // const loadBatches = async () => {
-  //   setLoading(true);
-  //   try {
-  //     const data = await BatchService.list();
-  //     setBatches(data);
-  //   } finally {
-  //     setLoading(false);
-  //   }
-  // };
-
   useEffect(() => {
     loadBatches();
   }, []);
@@ -71,24 +65,12 @@ export default function BatchesScreen() {
     }, 700);
   };
 
-  // const handleSubmit = async () => {
-  //   if (!form.name.trim()) return;
-  //   setSubmitting(true);
-  //   try {
-  //     await BatchService.create({
-  //       name: form.name.trim(),
-  //       description: form.description.trim(),
-  //       schedule: { time: form.schedule.trim() },
-  //     });
-  //     setForm({ name: '', description: '', schedule: '' });
-  //     await loadBatches();
-  //   } finally {
-  //     setSubmitting(false);
-  //   }
-  // };
-
   return (
     <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 40 }}>
+      <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+        <Text style={styles.backButtonText}>← Back</Text>
+      </TouchableOpacity>
+
       <Text style={styles.header}>Create a Batch</Text>
       <View style={styles.card}>
         <TextInput
@@ -126,8 +108,7 @@ export default function BatchesScreen() {
             <Text style={styles.batchTitle}>{batch.name}</Text>
             {batch.description ? <Text style={styles.batchDesc}>{batch.description}</Text> : null}
             <Text style={styles.batchMeta}>
-              Schedule:{' '}
-              <Text style={{ color: '#0c0c0cff' }}>{batch.schedule?.time || 'Not specified'}</Text>
+              Schedule: <Text style={{ color: '#0c0c0cff' }}>{batch.schedule?.time || 'Not specified'}</Text>
             </Text>
           </View>
         ))
@@ -143,6 +124,19 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#f2f3f6ff',
     padding: 16,
+  },
+  backButton: {
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    backgroundColor: '#0c3b2eff',
+    borderRadius: 10,
+    alignSelf: 'flex-start',
+    marginBottom: 10,
+  },
+  backButtonText: {
+    color: '#e2f7eb',
+    fontSize: 14,
+    fontWeight: '600',
   },
   header: {
     color: '#070707ff',
