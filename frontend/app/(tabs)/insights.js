@@ -1,15 +1,24 @@
 import { Picker } from '@react-native-picker/picker';
 import { useEffect, useState } from 'react';
-import {ActivityIndicator,ScrollView,StyleSheet,Text,TextInput,View,} from 'react-native';
-
-// import { BatchService, ReportsService, StudentService } from '../../src/services/api';
+import {
+  ActivityIndicator,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+  TouchableOpacity,
+} from 'react-native';
+import { useRouter } from 'expo-router';
 
 export default function InsightsScreen() {
-//   const [batches, setBatches] = useState([]);
-//   const [students, setStudents] = useState([]);
+  const router = useRouter();
+
   const [selectedBatch, setSelectedBatch] = useState('');
   const [selectedStudent, setSelectedStudent] = useState('');
-  const [date, setDate] = useState(() => new Date().toISOString().split('T')[0]);
+  const [date, setDate] = useState(() =>
+    new Date().toISOString().split('T')[0]
+  );
   const [month, setMonth] = useState(String(new Date().getMonth() + 1));
   const [year, setYear] = useState(String(new Date().getFullYear()));
   const [threshold, setThreshold] = useState('75');
@@ -23,89 +32,54 @@ export default function InsightsScreen() {
   const [loadingDefaulters, setLoadingDefaulters] = useState(false);
 
   const batches = [
-  { _id: 'b1', name: 'Batch A' },
-  { _id: 'b2', name: 'Batch B' },
-];
+    { _id: 'b1', name: 'Batch A' },
+    { _id: 'b2', name: 'Batch B' },
+  ];
 
-const students = [
-  { _id: 's1', name: 'Alice', rollNumber: '01' },
-  { _id: 's2', name: 'Bob', rollNumber: '02' },
-];
+  const students = [
+    { _id: 's1', name: 'Alice', rollNumber: '01' },
+    { _id: 's2', name: 'Bob', rollNumber: '02' },
+  ];
 
-const hardcodedStudentReport = {
-  stats: { percentage: 85, presents: 17, absents: 3, lates: 0 },
-  history: [
-    { _id: 'h1', date: '2025-11-28', status: 'PRESENT' },
-    { _id: 'h2', date: '2025-11-27', status: 'ABSENT' },
-    { _id: 'h3', date: '2025-11-26', status: 'PRESENT' },
-  ],
-};
+  const hardcodedStudentReport = {
+    stats: { percentage: 85, presents: 17, absents: 3, lates: 0 },
+    history: [
+      { _id: 'h1', date: '2025-11-28', status: 'PRESENT' },
+      { _id: 'h2', date: '2025-11-27', status: 'ABSENT' },
+      { _id: 'h3', date: '2025-11-26', status: 'PRESENT' },
+    ],
+  };
 
-const hardcodedBatchSummary = {
-  PRESENT: 18,
-  ABSENT: 2,
-  LATE: 1,
-};
+  const hardcodedBatchSummary = {
+    PRESENT: 18,
+    ABSENT: 2,
+    LATE: 1,
+  };
 
-const hardcodedDefaulters = [
-  { student: { _id: 's2', name: 'Bob', rollNumber: '02' }, percentage: 65 },
-];
+  const hardcodedDefaulters = [
+    { student: { _id: 's2', name: 'Bob', rollNumber: '02' }, percentage: 65 },
+  ];
 
-
-//   useEffect(() => {
-//     const bootstrap = async () => {
-//       const [batchData, studentData] = await Promise.all([
-//         BatchService.list(),
-//         StudentService.list(),
-//       ]);
-//       setBatches(batchData);
-//       setStudents(studentData);
-//       setSelectedBatch((prev) => prev || (batchData[0]?._id ?? ''));
-//       setSelectedStudent((prev) => prev || (studentData[0]?._id ?? ''));
-//     };
-//     bootstrap();
-//   }, []);
-
-//   useEffect(() => {
-//     if (!selectedStudent) return;
-//     setLoadingStudent(true);
-//     ReportsService.student(selectedStudent)
-//       .then(setStudentReport)
-//       .finally(() => setLoadingStudent(false));
-//   }, [selectedStudent]);
-
-//   useEffect(() => {
-//     if (!selectedBatch || !date) return;
-//     setLoadingBatch(true);
-//     ReportsService.batchSummary({ batch: selectedBatch, date })
-//       .then(setBatchSummary)
-//       .finally(() => setLoadingBatch(false));
-//   }, [selectedBatch, date]);
-
-//   useEffect(() => {
-//     if (!selectedBatch) return;
-//     setLoadingDefaulters(true);
-//     ReportsService.defaulters({
-//       batch: selectedBatch,
-//       month: Number(month),
-//       year: Number(year),
-//       threshold: Number(threshold),
-//     })
-//       .then(setDefaulters)
-//       .finally(() => setLoadingDefaulters(false));
-//   }, [selectedBatch, month, year, threshold]);
-
-    useEffect(() => {
-  setSelectedBatch(batches[0]._id);
-  setSelectedStudent(students[0]._id);
-  setStudentReport(hardcodedStudentReport);
-  setBatchSummary(hardcodedBatchSummary);
-  setDefaulters(hardcodedDefaulters);
-}, []);
+  useEffect(() => {
+    setSelectedBatch(batches[0]._id);
+    setSelectedStudent(students[0]._id);
+    setStudentReport(hardcodedStudentReport);
+    setBatchSummary(hardcodedBatchSummary);
+    setDefaulters(hardcodedDefaulters);
+  }, []);
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 40 }}>
+      
+      <TouchableOpacity
+        onPress={() => router.back()}
+        style={styles.backButton}
+      >
+        <Text style={styles.backButtonText}>← Back</Text>
+      </TouchableOpacity>
+
       <Text style={styles.sectionTitle}>Per Student Overview</Text>
+
       <View style={styles.card}>
         <View style={styles.pickerWrapper}>
           <Picker
@@ -115,10 +89,16 @@ const hardcodedDefaulters = [
             dropdownIconColor="#080909ff"
           >
             {students.map((student) => (
-              <Picker.Item key={student._id} label={student.name} value={student._id} color="#0f172a" />
+              <Picker.Item
+                key={student._id}
+                label={student.name}
+                value={student._id}
+                color="#0f172a"
+              />
             ))}
           </Picker>
         </View>
+
         {loadingStudent ? (
           <ActivityIndicator color="#101010ff" />
         ) : studentReport ? (
@@ -136,6 +116,7 @@ const hardcodedDefaulters = [
                 </View>
               ))}
             </View>
+
             <Text style={styles.historyTitle}>Recent Sessions</Text>
             {studentReport.history.slice(0, 6).map((entry) => (
               <View key={entry._id} style={styles.historyRow}>
@@ -145,7 +126,9 @@ const hardcodedDefaulters = [
                     month: 'short',
                   })}
                 </Text>
-                <Text style={styles.historyStatus(entry.status)}>{entry.status}</Text>
+                <Text style={styles.historyStatus(entry.status)}>
+                  {entry.status}
+                </Text>
               </View>
             ))}
           </View>
@@ -165,10 +148,16 @@ const hardcodedDefaulters = [
               dropdownIconColor="#080808ff"
             >
               {batches.map((batch) => (
-                <Picker.Item key={batch._id} label={batch.name} value={batch._id} color="#0f172a" />
+                <Picker.Item
+                  key={batch._id}
+                  label={batch.name}
+                  value={batch._id}
+                  color="#0f172a"
+                />
               ))}
             </Picker>
           </View>
+
           <TextInput
             style={styles.input}
             value={date}
@@ -177,6 +166,7 @@ const hardcodedDefaulters = [
             placeholderTextColor="#94a3b8"
           />
         </View>
+
         {loadingBatch ? (
           <ActivityIndicator color="#0b0b0bff" />
         ) : batchSummary ? (
@@ -186,8 +176,13 @@ const hardcodedDefaulters = [
               { label: 'Absent', value: batchSummary.ABSENT, color: '#ef4444' },
               { label: 'Late', value: batchSummary.LATE, color: '#fbbf24' },
             ].map((item) => (
-              <View key={item.label} style={[styles.statCard, { borderColor: item.color }]}>
-                <Text style={[styles.statValue, { color: item.color }]}>{item.value}</Text>
+              <View
+                key={item.label}
+                style={[styles.statCard, { borderColor: item.color }]}
+              >
+                <Text style={[styles.statValue, { color: item.color }]}>
+                  {item.value}
+                </Text>
                 <Text style={styles.statLabel}>{item.label}</Text>
               </View>
             ))}
@@ -208,6 +203,7 @@ const hardcodedDefaulters = [
             keyboardType="numeric"
             placeholderTextColor="#94a3b8"
           />
+
           <TextInput
             style={styles.input}
             value={year}
@@ -216,6 +212,7 @@ const hardcodedDefaulters = [
             keyboardType="numeric"
             placeholderTextColor="#94a3b8"
           />
+
           <TextInput
             style={styles.input}
             value={threshold}
@@ -225,6 +222,7 @@ const hardcodedDefaulters = [
             placeholderTextColor="#94a3b8"
           />
         </View>
+
         {loadingDefaulters ? (
           <ActivityIndicator color="#020303ff" />
         ) : defaulters.length ? (
@@ -232,13 +230,17 @@ const hardcodedDefaulters = [
             <View key={entry.student._id} style={styles.defaulterRow}>
               <View>
                 <Text style={styles.defaulterName}>{entry.student.name}</Text>
-                <Text style={styles.defaulterMeta}>#{entry.student.rollNumber}</Text>
+                <Text style={styles.defaulterMeta}>
+                  #{entry.student.rollNumber}
+                </Text>
               </View>
               <Text style={styles.defaulterPercent}>{entry.percentage}</Text>
             </View>
           ))
         ) : (
-          <Text style={styles.empty}>All students are above the threshold. 🎉</Text>
+          <Text style={styles.empty}>
+            All students are above the threshold. 🎉
+          </Text>
         )}
       </View>
     </ScrollView>
@@ -251,6 +253,21 @@ const styles = StyleSheet.create({
     backgroundColor: '#f6f6f8ff',
     padding: 16,
   },
+
+  backButton: {
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    backgroundColor: '#0c3b2eff',
+    borderRadius: 10,
+    alignSelf: 'flex-start',
+    marginBottom: 10,
+  },
+  backButtonText: {
+    color: '#e2f7eb',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+
   sectionTitle: {
     color: '#1950d1ff',
     fontSize: 18,
@@ -280,7 +297,7 @@ const styles = StyleSheet.create({
   statCard: {
     flexBasis: '31%',
     borderWidth: 1.3,
-    borderBottomWidth:3,
+    borderBottomWidth: 3,
     borderColor: '#012c18ff',
     borderRadius: 16,
     padding: 5,
@@ -312,7 +329,12 @@ const styles = StyleSheet.create({
     color: '#f8fafc',
   },
   historyStatus: (status) => ({
-    color: status === 'PRESENT' ? '#22c55e' : status === 'ABSENT' ? '#ef4444' : '#fbbf24',
+    color:
+      status === 'PRESENT'
+        ? '#22c55e'
+        : status === 'ABSENT'
+        ? '#ef4444'
+        : '#fbbf24',
     fontWeight: '600',
   }),
   filterRow: {
