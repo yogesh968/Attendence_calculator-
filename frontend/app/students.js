@@ -1,9 +1,6 @@
 import { Picker } from '@react-native-picker/picker';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'expo-router';
-const router = useRouter();
-
-
 import {
   ActivityIndicator,
   ScrollView,
@@ -14,9 +11,8 @@ import {
   View,
 } from 'react-native';
 
-// import { BatchService, StudentService } from '../src/services/api';
-
 export default function StudentsScreen() {
+  const router = useRouter();
   const [batches, setBatches] = useState([]);
   const [students, setStudents] = useState([]);
   const [selectedBatchFilter, setSelectedBatchFilter] = useState('');
@@ -25,12 +21,11 @@ export default function StudentsScreen() {
     rollNumber: '',
     batch: '',
     contactNumber: '',
-    _id: null, 
+    _id: null,
   });
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
 
- 
   const dummyBatches = [
     { _id: "b1", name: "Batch A" },
     { _id: "b2", name: "Batch B" },
@@ -124,6 +119,10 @@ export default function StudentsScreen() {
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 40 }}>
+      <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+        <Text style={styles.backButtonText}>← Back</Text>
+      </TouchableOpacity>
+
       <Text style={styles.header}>Add / Edit Student</Text>
       <View style={styles.card}>
         <TextInput
@@ -199,7 +198,6 @@ export default function StudentsScreen() {
               ) : null}
             </View>
 
-           
             <View style={{ flexDirection: 'row', gap: 10, marginTop: 10 }}>
               <TouchableOpacity
                 style={[styles.actionButton, { backgroundColor: '#fbbf24' }]}
@@ -216,13 +214,11 @@ export default function StudentsScreen() {
               </TouchableOpacity>
 
               <TouchableOpacity
-  style={{ backgroundColor: "#38bdf8", padding: 10, borderRadius: 12, marginVertical: 10 }}
-  onPress={() => router.push("/(tabs)/studentqr")}
->
-  <Text style={{ color: "white", fontWeight: "600", textAlign: "center" }}>
-     QR
-  </Text>
-</TouchableOpacity>
+                style={{ backgroundColor: "#38bdf8", padding: 10, borderRadius: 12, marginVertical: 10 }}
+                onPress={() => router.push("/(tabs)/studentqr")}
+              >
+                <Text style={{ color: "white", fontWeight: "600", textAlign: "center" }}>QR</Text>
+              </TouchableOpacity>
             </View>
           </View>
         ))
@@ -236,8 +232,21 @@ export default function StudentsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8fcfaff', 
+    backgroundColor: '#f8fcfaff',
     padding: 16,
+  },
+  backButton: {
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    backgroundColor: '#0c3b2eff',
+    borderRadius: 10,
+    alignSelf: 'flex-start',
+    marginBottom: 10,
+  },
+  backButtonText: {
+    color: '#e2f7eb',
+    fontSize: 14,
+    fontWeight: '600',
   },
   header: {
     color: '#161717ff',
