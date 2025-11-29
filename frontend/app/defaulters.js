@@ -10,10 +10,14 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function DefaultersScreen() {
   const router = useRouter();
+
   const [batches, setBatches] = useState([]);
+  const [students, setStudents] = useState([]);
+  const [attendance, setAttendance] = useState({});
   const [selectedBatch, setSelectedBatch] = useState('');
   const [month, setMonth] = useState(String(new Date().getMonth() + 1));
   const [year, setYear] = useState(String(new Date().getFullYear()));
@@ -21,21 +25,54 @@ export default function DefaultersScreen() {
   const [loading, setLoading] = useState(false);
   const [entries, setEntries] = useState([]);
 
+  const loadData = async () => {
+    const b = await AsyncStorage.getItem('batches');
+    const s = await AsyncStorage.getItem('students');
+    const a = await AsyncStorage.getItem('attendance');
+    const bb = b ? JSON.parse(b) : [];
+    const ss = s ? JSON.parse(s) : [];
+    const aa = a ? JSON.parse(a) : {};
+    setBatches(bb);
+    setStudents(ss);
+    setAttendance(aa);
+    if (bb.length) setSelectedBatch(bb[0]._id);
+  };
 
+  useEffect(() => {
+    loadData();
+  }, []);
 
-  // useEffect(() => {
-  //   setBatches(dummyBatches);
-  //   setSelectedBatch('b1');
-  // }, []);
+  useEffect(() => {
+    if (!selectedBatch || !attendance || !students.length) return;
+    setLoading(true);
+    const m = month.padStart(2, '0');
+    const y = year;
+    const batchAttendance = attendance[selectedBatch] || {};
+    const defaultersList = [];
 
-  // useEffect(() => {
-  //   setLoading(true);
-  //   const filtered = dummyEntries.filter(
-  //     (e) => e.percentage < Number(threshold)
-  //   );
-  //   setEntries(filtered);
-  //   setLoading(false);
-  // }, [selectedBatch, month, year, threshold]);
+    students.forEach((stu) => {
+      let presents = 0;
+      let total = 0;
+      Object.keys(batchAttendance).forEach((day) => {
+        if (!day.startsWith(`${y}-${m}`)) return;
+        batchAttendance[day].forEach((entry) => {
+          if (entry._id === stu._id) {
+            total++;
+            if (entry.status === 'PRESENT') presents++;
+          }
+        });
+      });
+      if (total) {
+        const percent = Math.round((presents / total) * 100);
+        if (percent < Number(threshold)) {
+          defaultersList.push({ student: stu, percentage: percent });
+        }
+      }
+    });
+
+    setEntries(defaultersList);
+    setLoading(false);
+  }, [selectedBatch, month, year, threshold, attendance, students]);
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 40 }}>
@@ -154,7 +191,7 @@ const styles = StyleSheet.create({
     borderRadius: 16,
   },
   picker: {
-    color: '#f8fafc',
+    color: '#101010ff',
   },
   filters: {
     flexDirection: 'row',
